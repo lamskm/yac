@@ -1,0 +1,16 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <item
+        android:id="@+id/basic"
+        android:icon="@drawable/ic_arrow_back_white_24dp"
+        android:textAllCaps="false"
+        android:title="Basic"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/about"
+        android:textAllCaps="false"
+        android:title="About"
+        app:showAsAction="always"/>
+
+</menu>

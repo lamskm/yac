@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">YetAnother\nCalculator</string>
+    <string name="action_settings">Settings</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="share">Share</string>
+    <string name="call">Call</string>
+    <string name="hex">Hex</string>
+    <string name="scientific">Scientific</string>
+    <string name="basic">Basic</string>
+    <string name="about">About</string>
+
+</resources>

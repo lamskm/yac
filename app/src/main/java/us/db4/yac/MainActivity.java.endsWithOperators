@@ -1,0 +1,404 @@
+package us.db4.yac;
+
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.Toolbar.OnMenuItemClickListener;
+import android.view.MenuItem;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
+
+//import java.util.ArrayList;
+//import java.util.regex.Pattern;
+import java.util.*;
+
+public class MainActivity extends AppCompatActivity {
+
+    protected enum InputState {
+        START_STATE("START_STATE"),
+        OPERAND("OPERAND"),
+        OPERAND_POINT("OPERAND_POINT"),
+        UNARY_OPERATOR("UNARY_OPERATOR"),
+        BINARY_OPERATOR("BINARY_OPERATOR"),
+        CLOSE_PARENTHESIS("CLOSE_PARENTHESIS");
+
+        private String stringValue;
+ 
+        InputState(String stringValue) {
+            this.stringValue = stringValue;
+        }
+ 
+        public String getStringValue() {
+            return stringValue;
+        }
+    }
+    protected class InputTextInfo {
+        InputState state;
+        int size;
+        InputTextInfo(InputState state, int size) {
+            this.state = state;
+            this.size = size;
+        }
+    }
+    protected class HistoryInfo {
+        String inputText;
+        InputTextInfo inputTextStackPacked[];
+        HistoryInfo(String inputText, Stack<InputTextInfo> inputTextStack) {
+            this.inputText = inputText;
+            int i = inputTextStack.size() - 1;
+            inputTextStackPacked = new InputTextInfo[i];
+            while (inputTextStack.size() > 1) {
+                i--;
+                inputTextStackPacked[i] = inputTextStack.pop();
+            }
+        }
+        Stack<InputTextInfo> getStack() {
+            Stack<InputTextInfo> stackToReturn = new Stack<InputTextInfo>();
+            stackToReturn.push(startStateInputTextInfo);
+            for (int i=0; i < inputTextStackPacked.length; i++)
+                stackToReturn.push(inputTextStackPacked[i]);
+            return stackToReturn;
+        }
+    }
+    protected InputState inputState;
+    protected int parenCount;
+    //protected TextView screen;
+    protected EditText inputText;
+    protected Stack<InputTextInfo> inputTextStack = new Stack<InputTextInfo>();
+    protected InputTextInfo startStateInputTextInfo = new InputTextInfo(InputState.START_STATE, 0);
+    protected InputTextInfo topInputTextInfo;
+    protected TextView resultText;
+    protected String result="";
+    protected Toolbar toolbar;
+    protected ArrayList<String> history;
+    protected ArrayList<HistoryInfo> history2;
+    protected HistoryInfo historyInfo;
+    protected int historyCount;
+    protected static String TAG = "MainActivity";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+    history = new ArrayList<String>();
+    history2 = new ArrayList<HistoryInfo>();
+System.out.println("Main.onCreate()...");
+System.out.println(historyCount);
+//if  (MainActivity.class.isInstance(this))
+//if  (this instanceof ScientificActivity)
+        Class a = this.getClass();   
+        System.out.println("Class of Object obj is : " + a.getName());   
+        super.onCreate(savedInstanceState);
+getWindow().setSoftInputMode( WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        if (this.getClass() != MainActivity.class) {
+System.out.println("not main");
+             return;
+        }
+        setContentView(R.layout.activity_main);
+
+        inputState = InputState.START_STATE;
+        this.inputTextStack.push(startStateInputTextInfo);
+        historyCount = 0;
+        parenCount = 0;
+        toolbar = (Toolbar) findViewById(R.id.toolbar_no_actionbar);
+        toolbar.inflateMenu(R.menu.main);
+        toolbar.setTitle("YAC");
+
+        // setOnMenuItemClickListener enabled to check for menu items:
+        // hex, trig, about
+        toolbar.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                                switch (item.getItemId()) {
+                                case R.id.hex:
+                                    Log.d(TAG, "calling Hex");
+                                    startActivity(new Intent(MainActivity.this, NumberBaseActivity.class));
+                                    break;
+                                case R.id.trig:
+                                    Log.d(TAG, "calling Scientific");
+                                    startActivity(new Intent(MainActivity.this, ScientificActivity.class));
+                                    break;
+
+                                case R.id.about:
+                                    Log.d(TAG, "about");
+                                    startActivity(new Intent(MainActivity.this, AboutActivity.class));
+                                    break;
+
+                                }   
+                                return false;
+                        }   
+                }); 
+
+
+        //screen = (TextView)findViewById(R.id.input_box);
+        inputText = findViewById(R.id.input_box);
+        inputText.setText("");
+        resultText = findViewById(R.id.result_box);
+    } // onCreate
+
+    public void onClickDelete(View v) {
+        Log.d(TAG, "onClickDelete...");
+        Log.d(TAG, inputState.getStringValue());
+        String newInputText = inputText.getText().toString();
+System.out.println("latestinputtext='"+newInputText+"'");
+        if (newInputText.length() == 0)
+            return;
+
+System.out.print("parenCount=");
+System.out.println(parenCount);
+System.out.println("last char='"+newInputText.charAt(newInputText.length()-1)+"'");
+        if (newInputText.charAt(newInputText.length()-1) == '(')
+            parenCount--;
+System.out.print("stacksize=");
+System.out.println(inputTextStack.size());
+        topInputTextInfo = (this.inputTextStack.pop());
+System.out.print("poping...");
+System.out.println(        topInputTextInfo.size);
+System.out.println(        topInputTextInfo.state);
+        InputTextInfo peekinfo= (this.inputTextStack.peek());
+System.out.print("peeking...");
+System.out.println(        peekinfo.size);
+System.out.println(        peekinfo.state);
+        newInputText = newInputText.substring(0,newInputText.length()-topInputTextInfo.size);
+System.out.println("latestinputtext'='"+newInputText+"'");
+        inputState = peekinfo.state;
+/*
+        Log.d(TAG, "edittext="+newInputText);
+        char deletedChar = newInputText.charAt(newInputText.length()-1);
+        newInputText = newInputText.substring(0,newInputText.length()-1);
+        Log.d(TAG, "edittext2="+newInputText);
+        Log.d(TAG, inputState.getStringValue());
+
+        if (newInputText.length() == 0)
+            inputState = InputState.START_STATE;
+        else if ('(' == newInputText.charAt(newInputText.length()-1))
+            inputState = InputState.START_STATE;
+        else if (')' == newInputText.charAt(newInputText.length()-1))
+            inputState = InputState.CLOSE_PARENTHESIS;
+        else if (Character.isDigit(newInputText.charAt(newInputText.length()-1)))
+            inputState = InputState.OPERAND;
+        else if ('.' == newInputText.charAt(newInputText.length()-1))
+            inputState = InputState.OPERAND_POINT;
+        else if ('-' == newInputText.charAt(newInputText.length()-1)) {
+            if (newInputText.length() == 1)
+                inputState = InputState.UNARY_OPERATOR;
+            else if ('(' == newInputText.charAt(newInputText.length()-2))
+                inputState = InputState.UNARY_OPERATOR;
+            else 
+                inputState = InputState.BINARY_OPERATOR;
+        }
+        else 
+            inputState = InputState.BINARY_OPERATOR;
+*/
+        Log.d(TAG, "New inputState="+inputState.getStringValue());
+        this.inputText.setText(newInputText);
+    }
+
+    public void onClickNumber(View v) {
+        Log.d(TAG, "onClickNumber...");
+        Log.d(TAG, inputState.getStringValue());
+        if (inputState == InputState.CLOSE_PARENTHESIS)
+            return;
+        if (inputState != InputState.OPERAND &&
+            inputState != InputState.OPERAND_POINT)
+            inputState = InputState.OPERAND;
+        Button b = (Button) v;
+        this.inputText.getText().append(b.getText().toString());
+        this.inputTextStack.push(new InputTextInfo(inputState,1));
+    }
+
+    public void onClickPoint(View v) {
+        Log.d(TAG, "onClickPoint...");
+        Log.d(TAG, inputState.getStringValue());
+        if (inputState == InputState.CLOSE_PARENTHESIS ||
+            inputState == InputState.OPERAND_POINT)
+            return;
+     
+        if (inputState == InputState.OPERAND) {
+            this.inputText.getText().append(".");
+            this.inputTextStack.push(new InputTextInfo(InputState.OPERAND_POINT,1));
+        }
+        else {
+            this.inputText.getText().append("0.");
+            this.inputTextStack.push(new InputTextInfo(InputState.OPERAND,1));
+            this.inputTextStack.push(new InputTextInfo(InputState.OPERAND_POINT,1));
+        }
+
+        inputState = InputState.OPERAND_POINT;
+    }
+
+    public void openParenthesis(View v) {
+        Log.d(TAG, "openParenthesis...");
+        Log.d(TAG, inputState.getStringValue());
+        if (inputState != InputState.BINARY_OPERATOR &&
+            inputState != InputState.UNARY_OPERATOR &&
+            inputState != InputState.START_STATE)
+            return;
+        parenCount++;
+        inputState = InputState.START_STATE;
+        this.inputTextStack.push(new InputTextInfo(inputState,1));
+        Button b = (Button) v;
+        this.inputText.getText().append(b.getText().toString());
+    }
+
+    public void closeParenthesis(View v) {
+        Log.d(TAG, "closeParenthesis...");
+        Log.d(TAG, inputState.getStringValue());
+        if (inputState != InputState.OPERAND && 
+            inputState != InputState.OPERAND_POINT &&
+            inputState != InputState.CLOSE_PARENTHESIS)
+            return;
+        if (parenCount == 0)
+            return;
+        parenCount--;
+        inputState = InputState.CLOSE_PARENTHESIS;
+        this.inputTextStack.push(new InputTextInfo(inputState,1));
+        Button b = (Button) v;
+        this.inputText.getText().append(b.getText().toString());
+    }
+
+    public void onClickOperator(View v) {
+        Log.d(TAG, "onClickOperator...");
+        Log.d(TAG, inputState.getStringValue());
+        if (inputState != InputState.START_STATE &&
+            inputState != InputState.OPERAND &&
+            inputState != InputState.OPERAND_POINT &&
+            inputState != InputState.CLOSE_PARENTHESIS)
+            return;
+        Button b = (Button) v;
+        if (inputState == InputState.START_STATE) {
+            if (b.getText().charAt(0) == '-') {
+                this.inputText.getText().append(b.getText().charAt(0));
+                inputState = InputState.UNARY_OPERATOR;
+                this.inputTextStack.push(new InputTextInfo(inputState,1));
+            }
+        } else {
+            String prefix = "";
+            if (inputState == InputState.OPERAND_POINT)
+                prefix = "0";
+            this.inputText.getText().append(prefix + b.getText().toString());
+            inputState = InputState.BINARY_OPERATOR;
+            this.inputTextStack.push(new InputTextInfo(inputState,1));
+        }
+    }
+
+    public void onClearButton(View v) {
+        Log.d(TAG, "onClearButton...");
+        Log.d(TAG, inputState.getStringValue());
+System.out.println(inputTextStack.size());
+        inputState=InputState.START_STATE;
+        parenCount = 0;
+        historyCount = history.size();
+        inputText.getText().clear();
+        resultText.setText("");
+        while (this.inputTextStack.size() > 1)
+            inputTextStack.pop();
+        //this.inputTextStack.push(new InputTextInfo(inputState,0));
+System.out.print("Leaving onClearButton...");
+System.out.println(inputTextStack.size());
+    }
+
+    protected boolean endsWithOperator() {
+        return inputText.getText().toString().endsWith("+") || 
+               inputText.getText().toString().endsWith("-") || 
+               inputText.getText().toString().endsWith("\u00F7") || 
+               inputText.getText().toString().endsWith("\u00D7");
+    }
+
+    public void equalResult(View v) {
+        double result = 0.0;
+        Log.d(TAG, "equalResult...");
+        Log.d(TAG, inputState.getStringValue());
+        String input = inputText.getText().toString();
+        Log.d(TAG, "input="+input);
+        Log.d(TAG, "parenCount=");
+        Log.d(TAG, Integer.toString(parenCount));
+
+        if (inputState != InputState.OPERAND &&
+            inputState != InputState.CLOSE_PARENTHESIS)
+            return;
+
+        if (parenCount > 0) {
+            for (int i=0; i<parenCount; i++) {
+                input += ")";
+                this.inputTextStack.push(new InputTextInfo(InputState.CLOSE_PARENTHESIS,1));
+            }
+            parenCount = 0;
+            this.inputText.setText(input);
+            inputState = InputState.CLOSE_PARENTHESIS;
+        }
+
+        Log.d(TAG, "After paren adjustment, input="+input);
+        //if(!endsWithOperator()) {
+            String input2 = input;
+            if (input2.contains("\u00D7")) {
+                input2 = input2.replaceAll("\u00D7", "*");
+            }
+
+            if (input2.contains("\u00F7")) {
+                input2 = input2.replaceAll("\u00F7", "/");
+            }
+
+            if (input2.contains("\u221A")) {
+                input2 = input2.replaceAll("\u221A", "`");
+            }
+            Log.d(TAG, "After operator adjustment, input="+input2);
+
+            //Expression expression = new ExpressionBuilder(input).build();
+            //double result = expression.evaluate();
+            ArithmeticExpression.set(input2);
+            try {
+                result = ArithmeticExpression.eval();
+                Log.d(TAG, "inside try result=");
+                Log.d(TAG, String.valueOf(result));
+            }
+            catch (Exception e) {
+                Log.d(TAG, "\n*** MainActivity:    " + e.getMessage());
+                resultText.setText("Input error:"+e.getMessage());
+                return;
+            }
+
+            resultText.setText(String.valueOf(result));
+            Log.d(TAG, "result=");
+            Log.d(TAG, String.valueOf(result));
+            history.add(input);
+            history2.add(new HistoryInfo(input,inputTextStack));
+            historyCount = history.size();
+        //}
+        //else 
+            //resultText.setText("");
+
+    }
+
+    public void onClickHistory(View v) {
+        Log.d(TAG, "onClickHistory...");
+        Log.d(TAG, inputState.getStringValue());
+        Log.d(TAG, String.valueOf(historyCount));
+
+        if (!resultText.getText().toString().equals(""))
+            return;
+
+        if (historyCount > 0) {
+            //:wthis.inputText.setText(history.get(historyCount-1));
+            historyInfo = history2.get(historyCount-1);
+            this.inputText.setText(historyInfo.inputText);
+            inputTextStack = historyInfo.getStack();
+System.out.print("onClickHistory checking return stack.size=");
+System.out.println(inputTextStack.size());
+            historyCount--;
+            String tmpstr = inputText.getText().toString();
+            if (tmpstr.charAt(tmpstr.length()-1) == ')')
+                inputState = InputState.CLOSE_PARENTHESIS;
+            else
+                inputState = InputState.OPERAND;
+        }
+    }
+}

@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <item
+        android:id="@+id/hex_oct_bin"
+        android:textAllCaps="false"
+        android:title="Hex/Oct"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/scientific"
+        android:textAllCaps="false"
+        android:title="Scientific"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/about"
+        android:textAllCaps="false"
+        android:title="About"
+        app:showAsAction="always"/>
+
+</menu>
